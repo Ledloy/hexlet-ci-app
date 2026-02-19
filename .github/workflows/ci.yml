@@ -1,31 +1,28 @@
-name: CI
+name: Node CI
 
-on: [push]
+on:
+  - push
+  - pull_request
+
+env:
+  CI: true
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
-    env:
-      npm_config_legacy_peer_deps: true
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Install esbuild
-        run: npm install esbuild@0.17.5 --legacy-peer-deps
-
-      - name: Build (may fail, but we try)
-        run: npm run build || echo "Build failed, continuing..."
-
-      - name: Run linter
-        run: make lint || echo "Lint failed"
-
-      - name: Run tests
-        run: npm test || echo "Tests failed — known issue with Strapi v5 tests"
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: make install
+      - run: make lint
+      - run: make test
+      - uses: hexlet-components/hello-from-hexlet-action@release
